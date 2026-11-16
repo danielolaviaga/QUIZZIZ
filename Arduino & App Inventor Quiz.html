@@ -1,0 +1,698 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Arduino &amp; App Inventor Quiz</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&amp;display=swap">
+<style>
+  /* Layout: one phone-width column centred on a navy gradient, topbar (menu, counter pill, timer ring) over question card and four stacked choices. Single dark look by choice. */
+  :root {
+    --bg: #070a2c;
+    --bg-mid: #111a66;
+    --bg-low: #2a2597;
+    --ink: #eef1ff;
+    --ink-dim: #a9b3e3;
+    --card: rgba(7, 10, 44, 0.72);
+    --line: rgba(150, 168, 255, 0.24);
+    --choice-a: #4652d4;
+    --choice-b: #363cb0;
+    --accent: #8f99ff;
+    --on-accent: #070a2c;
+    --ok: #35d493;
+    --bad: #ff6f86;
+    --font: "Quicksand", ui-rounded, "Segoe UI", system-ui, sans-serif;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.4;
+    color: var(--ink);
+    background-color: var(--bg);
+    background-image: linear-gradient(180deg, var(--bg) 0%, var(--bg-mid) 58%, var(--bg-low) 100%);
+    background-attachment: fixed;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+
+  .app {
+    max-width: 600px;
+    margin: 0 auto;
+    min-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-block: 16px 28px;
+  }
+
+  button { font-family: inherit; }
+  :focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+
+  /* Top bar */
+  .top {
+    display: grid;
+    grid-template-columns: 44px 1fr 44px;
+    align-items: center;
+    gap: 8px;
+  }
+  .icon-btn {
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .icon-btn:hover { background: rgba(255, 255, 255, 0.14); }
+  .pill {
+    justify-self: center;
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: #05072c;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .timer { position: relative; width: 44px; height: 44px; display: grid; place-items: center; }
+  .timer.off { visibility: hidden; }
+  .timer svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+  .timer .track { fill: none; stroke: rgba(255, 255, 255, 0.14); stroke-width: 4; }
+  .timer .fg { fill: none; stroke: var(--accent); stroke-width: 4; stroke-linecap: round; }
+  .timer.low .fg { stroke: var(--bad); }
+  .timer span { position: relative; font-weight: 700; font-size: 15px; font-variant-numeric: tabular-nums; }
+
+  .screen { display: flex; flex-direction: column; gap: 16px; flex: 1; }
+
+  /* Start screen */
+  .eyebrow {
+    margin: 12px 0 0;
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(30px, 8vw, 42px);
+    line-height: 1.1;
+    font-weight: 700;
+    text-wrap: balance;
+  }
+  .lead { margin: 0; font-size: 17px; font-weight: 500; color: var(--ink-dim); max-width: 46ch; }
+  .topics { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .topics li {
+    padding: 6px 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 13px; font-weight: 600;
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .best { margin: 0; font-weight: 600; font-size: 14px; color: var(--ink-dim); min-height: 1.4em; }
+  .hint { margin: 0; font-size: 13px; color: var(--ink-dim); }
+
+  /* Buttons */
+  .btn {
+    min-height: 52px;
+    padding: 12px 20px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink);
+    font-size: 16px; font-weight: 700;
+    cursor: pointer;
+  }
+  .btn:hover { background: rgba(255, 255, 255, 0.08); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .btn.primary:hover { filter: brightness(1.08); background: var(--accent); }
+  .btn:disabled { visibility: hidden; }
+
+  /* Quiz */
+  .bar { height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.3s ease; }
+  .card {
+    padding: 24px 20px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: var(--card);
+    text-align: center;
+    font-size: clamp(17px, 4.6vw, 20px);
+    font-weight: 700;
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+  .choices { display: grid; gap: 12px; }
+  .choice {
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 58px;
+    padding: 14px 44px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: linear-gradient(180deg, var(--choice-a), var(--choice-b));
+    box-shadow: 0 6px 16px rgba(5, 8, 50, 0.45);
+    color: #fff;
+    font-size: 15.5px; font-weight: 600; line-height: 1.35;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.08s ease, filter 0.15s ease, opacity 0.2s ease;
+  }
+  .choice span { min-width: 0; overflow-wrap: anywhere; }
+  .choice:hover:not(:disabled) { filter: brightness(1.12); }
+  .choice:active:not(:disabled) { transform: translateY(1px); }
+  .choice:disabled { cursor: default; color: #fff; }
+  .choice.ok { background: linear-gradient(180deg, #1f9c6c, #167a55); border-color: var(--ok); }
+  .choice.bad { background: linear-gradient(180deg, #c9455d, #a1324a); border-color: var(--bad); }
+  .choice.dim { opacity: 0.45; }
+  .choice.ok::after, .choice.bad::after {
+    position: absolute; right: 16px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px; font-weight: 700;
+  }
+  .choice.ok::after { content: "\2713"; }
+  .choice.bad::after { content: "\2715"; }
+
+  .fb { min-height: 1.4em; margin: 0; text-align: center; font-weight: 700; }
+  .fb.ok { color: var(--ok); }
+  .fb.bad { color: var(--bad); }
+
+  /* Results */
+  .score { display: flex; align-items: baseline; justify-content: center; gap: 10px; margin-top: 12px; }
+  .score strong { font-size: clamp(64px, 20vw, 96px); line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .score span { font-size: 24px; font-weight: 600; color: var(--ink-dim); }
+  .pct { margin: 0; text-align: center; font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .msg { margin: 0; text-align: center; color: var(--ink-dim); font-weight: 500; }
+  .actions { display: grid; gap: 12px; }
+  .review { display: grid; gap: 12px; }
+  .review article {
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--card);
+  }
+  .review h3 { margin: 0 0 6px; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-dim); }
+  .review p { margin: 0 0 8px; font-size: 14.5px; font-weight: 600; overflow-wrap: anywhere; }
+  .review .yours { color: var(--bad); }
+  .review .right { color: var(--ok); margin-bottom: 0; }
+
+  /* Menu drawer */
+  .scrim { position: fixed; inset: 0; background: rgba(2, 4, 24, 0.62); z-index: 20; }
+  .drawer {
+    position: fixed; top: 0; left: 0; bottom: 0;
+    width: min(330px, 88vw);
+    z-index: 30;
+    display: flex; flex-direction: column; gap: 8px;
+    padding: calc(20px + env(safe-area-inset-top, 0px)) 20px calc(20px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
+    background: #0b1150;
+    border-right: 1px solid var(--line);
+    overflow-y: auto;
+  }
+  .drawer-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .drawer h2 { margin: 0; font-size: 20px; }
+  .switch {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .switch small { display: block; font-weight: 500; color: var(--ink-dim); font-size: 12.5px; }
+  .switch input {
+    appearance: none; -webkit-appearance: none;
+    flex: none; margin: 0;
+    position: relative;
+    width: 46px; height: 26px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.22);
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .switch input::after {
+    content: "";
+    position: absolute; top: 3px; left: 3px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #fff;
+    transition: transform 0.15s ease;
+  }
+  .switch input:checked { background: var(--accent); }
+  .switch input:checked::after { transform: translateX(20px); }
+  .drawer .btn { width: 100%; }
+  .drawer .gap { height: 8px; }
+  .drawer .note { margin: 4px 0 8px; font-size: 13px; color: var(--ink-dim); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; scroll-behavior: auto !important; }
+  }
+</style>
+
+<div class="app">
+  <header class="top">
+    <button class="icon-btn" id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="drawer">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg>
+    </button>
+    <div class="pill" id="pill" aria-live="polite"></div>
+    <div class="timer off" id="timer" aria-label="Time left">
+      <svg viewBox="0 0 44 44" aria-hidden="true"><circle class="track" cx="22" cy="22" r="18"/><circle class="fg" id="ringFg" cx="22" cy="22" r="18"/></svg>
+      <span id="timerNum"></span>
+    </div>
+  </header>
+
+  <main>
+    <section class="screen" id="start">
+      <p class="eyebrow">Arduino Uno · Starter kit · MIT App Inventor</p>
+      <h1>Arduino &amp; App Inventor Quiz</h1>
+      <p class="lead" id="lead"></p>
+      <ul class="topics">
+        <li>Sensors and inputs</li>
+        <li>setup() and loop()</li>
+        <li>Loops and conditions</li>
+        <li>HC-05 Bluetooth</li>
+        <li>Designer and Blocks</li>
+      </ul>
+      <button class="btn primary" id="startBtn" type="button">Start quiz</button>
+      <p class="best" id="bestLine"></p>
+      <p class="hint">Open the menu for the timer and shuffle options.</p>
+    </section>
+
+    <section class="screen" id="quiz" hidden>
+      <div class="bar" aria-hidden="true"><i id="barFill"></i></div>
+      <div class="card" id="qText"></div>
+      <div class="choices" id="choices" role="group" aria-labelledby="qText"></div>
+      <p class="fb" id="fb" aria-live="polite"></p>
+      <button class="btn primary" id="next" type="button" disabled>Next question</button>
+    </section>
+
+    <section class="screen" id="result" hidden>
+      <div class="score"><strong id="scoreNum"></strong><span id="scoreTotal"></span></div>
+      <p class="pct" id="scorePct"></p>
+      <p class="msg" id="scoreMsg"></p>
+      <div class="actions">
+        <button class="btn primary" id="retryBtn" type="button" hidden>Retry missed questions</button>
+        <button class="btn" id="reviewBtn" type="button" hidden>Show missed questions</button>
+        <button class="btn" id="againBtn" type="button">Start over</button>
+      </div>
+      <div class="review" id="reviewList" hidden></div>
+    </section>
+  </main>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-label="Quiz options">
+  <div class="drawer-head">
+    <h2>Options</h2>
+    <button class="icon-btn" id="closeMenu" type="button" aria-label="Close menu">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 3l12 12M15 3L3 15"/></svg>
+    </button>
+  </div>
+  <label class="switch" for="optTimer"><span>30-second timer<small>A question counts as missed when time runs out.</small></span><input type="checkbox" role="switch" id="optTimer"></label>
+  <label class="switch" for="optShuffleQ"><span>Shuffle questions</span><input type="checkbox" role="switch" id="optShuffleQ"></label>
+  <label class="switch" for="optShuffleC"><span>Shuffle answer order</span><input type="checkbox" role="switch" id="optShuffleC"></label>
+  <p class="note">Shuffle options apply the next time a quiz starts.</p>
+  <button class="btn" id="restartBtn" type="button">Restart quiz</button>
+  <button class="btn" id="homeBtn" type="button">Back to start</button>
+</aside>
+
+<script>
+(function () {
+  'use strict';
+
+  /* Question bank. n = number shown in the original quiz, a = index of the correct choice.
+     Q1 was not in the screenshots; add it as the first entry when it is available. */
+  var QUESTIONS = [
+    { n: 2, q: "An Arduino project uses a sensor that produces continuously changing voltage values depending on the surrounding light intensity. Why is analog input more appropriate than digital input for this application?",
+      o: ["Analog input is used only for sending commands to external devices.", "Digital input can read an unlimited number of voltage levels.", "Analog input allows the Arduino to interpret varying voltage levels rather than only HIGH or LOW states.", "Digital input automatically converts all sensor readings into temperature values."], a: 2 },
+    { n: 3, q: "A potentiometer is connected to analog pin A0 of an Arduino Uno. The program needs to interpret its continuously varying voltage as a numerical sensor reading. Which mechanism performs this conversion?",
+      o: ["Digital-to-Analog Converter", "Analog-to-Digital Converter", "Serial communication interface", "Digital output controller"], a: 1 },
+    { n: 4, q: "An Arduino Uno communicates with an Android application using an HC-05 Bluetooth module. Which connection correctly matches the wiring configuration shown in the lesson?",
+      o: ["VCC to 3.3V, GND to GND, RXD to TX, TXD to RX", "VCC to 5V, GND to GND, RXD to RX, TXD to TX", "VCC to 5V, GND to GND, RXD to TX, TXD to RX", "VCC to GND, GND to 5V, RXD to RX, TXD to TX"], a: 2 },
+    { n: 5, q: "A developer wants to test an application directly on an Android phone while making changes and immediately observing the results. Which MIT App Inventor tool is intended for this workflow?",
+      o: ["Properties", "AI Companion App", "Blocks View", "Designer View"], a: 1 },
+    { n: 6, q: "A project requires displaying sensor readings using a 16x2 LCD while minimizing the number of Arduino pins used for communication. Which component is most appropriate?",
+      o: ["RGB LED", "7-Segment Display", "LED Matrix", "I2C LCD Module"], a: 3 },
+    { n: 7, q: "A program must activate a buzzer only when an analog sensor reading exceeds 500. If the reading is exactly 500, which outcome follows from the condition if (sensorValue > threshold)?",
+      o: ["The buzzer remains LOW because 500 is not greater than 500.", "The buzzer activates because 500 meets the threshold.", "The buzzer activates because equality is treated as greater than.", "The buzzer alternates between HIGH and LOW."], a: 0 },
+    { n: 8, q: "A mobile application sends the command LED_ON to an Arduino through Bluetooth. What should the Arduino do after receiving and interpreting the command?",
+      o: ["Restart the Arduino IDE.", "Disconnect the Bluetooth module immediately.", "Display the command on the Serial Monitor without performing an action.", "Activate the corresponding LED by controlling its output pin."], a: 3 },
+    { n: 9, q: "An Arduino program contains instructions for initializing a sensor and configuring the communication settings. These instructions should execute only once when the board starts or resets. Where should they be placed?",
+      o: ["setup()", "loop()", "A custom function called inside loop()", "The Serial Monitor"], a: 0 },
+    { n: 10, q: "A student wants to monitor the messages and sensor readings sent by an Arduino while testing a program. Which Arduino IDE feature should be used?",
+      o: ["Serial Monitor", "Board Selection", "Library Selection", "Port Selection"], a: 0 },
+    { n: 11, q: "A student is developing an automatic lighting system that adjusts LED brightness based on the surrounding light intensity. Which type of input is most appropriate for reading changing light levels?",
+      o: ["Serial input", "Digital input", "Analog input", "Digital output"], a: 2 },
+    { n: 12, q: "A programmer repeatedly uses the same set of instructions in different parts of an Arduino program. Which is the best reason to place those instructions inside a function?",
+      o: ["To convert digital signals into analog signals", "To make the code reusable, organized, and easier to debug", "To increase the voltage supplied to the Arduino", "To prevent the loop() function from executing"], a: 1 },
+    { n: 13, q: "An Arduino collects temperature readings and needs to send them continuously to a connected mobile application through an HC-05 Bluetooth module. Which Arduino functions are used to transmit the readings through serial communication?",
+      o: ["Serial.print() and Serial.println()", "Serial.read() and Serial.parseInt()", "analogRead() and analogWrite()", "digitalRead() and digitalWrite()"], a: 0 },
+    { n: 14, q: "A project uses a push button to control an LED. The button sends a signal to the Arduino, while the LED responds to the program's instructions. How should these components be classified?",
+      o: ["The button is a digital input, while the LED is a digital output.", "Both are analog inputs.", "Both are digital outputs.", "The button is a digital output, while the LED is an analog input."], a: 0 },
+    { n: 15, q: "A beginner wants to test an Arduino circuit without permanently soldering the components. Which starter-kit component allows the student to connect and rearrange electronic components for prototyping?",
+      o: ["Breadboard", "Resistor", "Jumper wire", "USB Cable"], a: 0 },
+    { n: 16, q: "A project requires an actuator that can rotate to a specific angle, such as 45°, 90°, or 180°. Which component from the Arduino starter kit is designed for this purpose?",
+      o: ["DC Motor", "SG90 Servo Motor", "Relay Module", "Passive Buzzer"], a: 1 },
+    { n: 17, q: "A mobile application requires users to enter text, such as a username or a command. Which MIT App Inventor component is most appropriate?",
+      o: ["Notifier", "TextBox", "Image", "Label"], a: 1 },
+    { n: 18, q: "A student wants to activate a buzzer only when a sensor reading exceeds a specified threshold. Which programming structure should be used to determine whether the buzzer should turn on or remain off?",
+      o: ["while loop", "for loop", "if-else statement", "Function declaration"], a: 2 },
+    { n: 19, q: "An Arduino project needs to control several output devices but has limited available digital pins. Which component can be used to expand the number of outputs through serial-to-parallel shifting?",
+      o: ["74HC595 Shift Register", "DHT11", "HC-SR04", "LM35DZ"], a: 0 },
+    { n: 20, q: "A developer wants an Arduino to turn on an LED when a button is pressed and turn it off when the button is released. Which programming structure best supports these two different responses?",
+      o: ["Serial.println()", "while loop", "if-else statement", "for loop"], a: 2 },
+    { n: 21, q: "An Arduino receives the command LED_ON from a mobile application. Which sequence correctly describes how the command becomes a physical output?",
+      o: ["The Arduino sends the command to the app, which directly powers the LED.", "The Arduino receives and interprets the command, then activates the corresponding actuator.", "The Bluetooth module independently interprets LED_ON and supplies power to the LED.", "The app disables LED_ON, and the Arduino automatically changes the pin without receiving data."], a: 1 },
+    { n: 22, q: "An Arduino sends temperature readings through Bluetooth using Serial.println(). Which MIT App Inventor block is responsible for capturing the incoming sensor data?",
+      o: ["ListPicker.BeforePicking", "BluetoothClient.SendText", "BluetoothClient.ReceiveText", "Button.Click"], a: 2 },
+    { n: 23, q: "An Arduino Uno receives an analog voltage of 5V from a sensor. Based on the analog-to-digital conversion range discussed in the lesson, what value should the Arduino approximately read?",
+      o: ["255", "0", "4096", "1023"], a: 3 },
+    { n: 24, q: "After completing the visual layout of an application, a developer needs to program what happens when a button is clicked. Which MIT App Inventor workspace should be used?",
+      o: ["Designer View", "Emulator View", "Assets Panel", "Blocks View"], a: 3 },
+    { n: 25, q: "A student uploads a program that initializes an LED and then repeatedly checks a sensor reading. Which statement correctly describes the execution of setup() and loop()?",
+      o: ["setup() executes once, followed by continuous execution of loop().", "setup() repeats continuously while loop() executes only after a reset.", "Both functions execute only once after the board is powered on.", "The loop() function executes before setup() to initialize the hardware."], a: 0 },
+    { n: 26, q: "A project requires measuring the distance between an obstacle and a robot using ultrasonic sound waves. Which component is most appropriate?",
+      o: ["Flame Sensor", "HC-SR04 Ultrasonic Sensor", "Photoresistor", "Buzzer"], a: 1 },
+    { n: 27, q: "A program must continue repeating instructions while a particular condition remains true. However, the exact number of repetitions is not known in advance. Which loop should be used?",
+      o: ["for loop", "while loop", "if-else statement", "Function declaration"], a: 1 },
+    { n: 28, q: "A developer wants to prevent users from interacting with a particular button temporarily without removing it from the application's interface. Which component property should be modified?",
+      o: ["Background Color", "Text Alignment", "Enabled", "Font Size"], a: 2 },
+    { n: 29, q: "A student is designing an access-control project. Users must present an RFID card or keychain, and the system must read the identification data stored on it. Which component should be used?",
+      o: ["IR Receiver", "RC522 RFID Module", "HC-SR04 Ultrasonic Sensor", "DHT11 Sensor"], a: 1 },
+    { n: 30, q: "A student uploads a program that reads a sensor continuously. The initialization works correctly, but the student wants the sensor-reading instructions to execute repeatedly after startup. Which function should contain the main program logic?",
+      o: ["setup()", "Serial.begin()", "loop()", "digitalRead()"], a: 2 },
+    { n: 31, q: "A developer needs to build an automatic night light. The system must detect changing light intensity and switch on an LED based on the reading. Which starter-kit component is most appropriate for detecting the light?",
+      o: ["Ultrasonic Sensor", "Flame Sensor", "Photoresistor", "Water level sensor"], a: 2 },
+    { n: 32, q: "A developer wants a mobile interface where related Bluetooth controls appear side by side to conserve vertical screen space. Which layout arrangement is the best choice?",
+      o: ["Horizontal Arrangement", "Vertical Arrangement", "Screen Initialization", "Table Arrangement"], a: 0 },
+    { n: 33, q: "A student wants an LED to blink exactly eight times before the program continues to the next instruction. Which loop is most appropriate?",
+      o: ["switch statement", "if-else statement", "for loop", "while loop"], a: 2 },
+    { n: 34, q: "A student is developing a project that requires multiple sensors, motors, and other connected devices. The Arduino Uno does not have enough available pins for the planned components. Which Arduino board would be the most appropriate alternative?",
+      o: ["Arduino Nano", "Arduino Leonardo", "Arduino Mega", "Arduino Micro"], a: 2 },
+    { n: 35, q: "A monitoring system must record the current time and date even when its power supply is turned off. Which component is specifically designed for this purpose?",
+      o: ["LM35DZ", "Water Level Sensor", "RTC Module", "Sound Sensor"], a: 2 },
+    { n: 36, q: "An Arduino Uno receives an analog voltage that is approximately halfway between 0 V and 5 V. Based on the 1023 analog reading range presented in the lesson, what value should the reading approximately produce?",
+      o: ["1023", "768", "255", "512"], a: 3 },
+    { n: 37, q: "A student wants an LED to remain HIGH while a button is not pressed and turn LOW once the button is pressed. Which loop structure best matches the example discussed in the lesson?",
+      o: ["if statement without a repeated execution structure", "for loop with a fixed iteration count", "setup() function containing a one-time button reading", "while loop checking whether digitalRead(buttonPin) is not LOW"], a: 3 },
+    { n: 38, q: "A push button is connected to an Arduino digital pin. The program must determine whether the button is currently pressed or released before performing an action. Which programming concept is most appropriate?",
+      o: ["Conditional statement using the digital input state", "Function parameter declaration", "Analog-to-digital conversion only", "Serial communication"], a: 0 },
+    { n: 39, q: "A student is creating a mobile application in MIT App Inventor and needs to arrange buttons, labels, and other interface elements. Which workspace should be used?",
+      o: ["Designer View", "Blocks View", "Emulator Settings", "Assets Panel"], a: 0 },
+    { n: 40, q: "A mobile application requires several sound effects, icons, and images. Which MIT App Inventor component is responsible for managing these resources?",
+      o: ["Assets Panel", "Properties", "Designer View", "Blocks View"], a: 0 },
+    { n: 41, q: "A developer has completed the visual layout of an application. The next task is to make a button send a Bluetooth command whenever it is clicked. Where should the event logic be implemented?",
+      o: ["Properties", "Blocks View", "Assets Panel", "Designer View"], a: 1 },
+    { n: 42, q: "A developer is designing a mobile application and wants to arrange buttons, labels, sliders, and multiple screens before implementing the application's behavior. Which MIT App Inventor workspace should be used?",
+      o: ["Assets Panel", "AI Companion App", "Blocks View", "Designer View"], a: 3 },
+    { n: 43, q: "A mobile application needs to display a collection of items in a scrollable list so users can view multiple entries. Which component should be used?",
+      o: ["Slider", "ListView", "CheckBox", "Button"], a: 1 },
+    { n: 44, q: "A developer wants to arrange interface components in rows and columns, creating a table-like layout. Which arrangement component is most appropriate?",
+      o: ["Vertical Arrangement", "Table Arrangement", "Horizontal Arrangement", "Linear Arrangement"], a: 1 },
+    { n: 45, q: "An LED connected to an Arduino is overheating because too much current is passing through it. Which component should be added to limit the current and help prevent damage?",
+      o: ["Jumper Wire", "Push Button", "Resistor", "Potentiometer"], a: 2 },
+    { n: 46, q: "Before uploading a program to an Arduino Uno, the IDE must be configured correctly. Which setting identifies the specific Arduino board being used?",
+      o: ["Board Selection", "Library Selection", "Port Selection", "Serial Monitor"], a: 0 },
+    { n: 47, q: "An Arduino project requires numerous sensors, motors, and connected devices. The Uno has insufficient pins and memory for the planned implementation. Which board is the most appropriate replacement?",
+      o: ["Arduino Micro", "Arduino Mega", "Arduino Nano", "Arduino Leonardo"], a: 1 },
+    { n: 48, q: "A mobile application must allow users to select one Bluetooth device from a list of discovered devices before connecting. Which component is most appropriate for presenting the available choices?",
+      o: ["ListPicker", "ListView", "Label", "Slider"], a: 0 },
+    { n: 49, q: "A programmer repeatedly writes the same sequence of instructions to activate an LED, wait, and deactivate it in several sections of a program. Which programming technique would best improve modularity and reduce repeated code?",
+      o: ["Place all repeated instructions inside setup().", "Increase the number of conditional statements.", "Replace all instructions with global variables.", "Create a reusable function containing the repeated instructions."], a: 3 },
+    { n: 50, q: "An Arduino program uses the following structure: for (int i = 0; i < 10; i++). How many times will the loop body execute if no other statements modify i or interrupt execution?",
+      o: ["10 times", "9 times", "11 times", "infinite times"], a: 0 }
+  ];
+
+  var TOTAL = QUESTIONS.length;
+  var TIME = 30;
+  var CIRC = 2 * Math.PI * 18;
+
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function shuffled(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  var store = {
+    get: function (k, d) {
+      try { var v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; }
+    },
+    set: function (k, v) {
+      try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ }
+    }
+  };
+
+  var saved = store.get('aq-settings', {});
+  var settings = { shuffleQ: false, shuffleC: false, timer: false };
+  if (saved && typeof saved === 'object') {
+    settings.shuffleQ = !!saved.shuffleQ;
+    settings.shuffleC = !!saved.shuffleC;
+    settings.timer = !!saved.timer;
+  }
+
+  var run = null;
+  var timerId = null;
+  var timerEnd = 0;
+
+  var screens = ['start', 'quiz', 'result'];
+  function show(name) {
+    screens.forEach(function (n) { $(n).hidden = (n !== name); });
+    if (name !== 'quiz') { stopTimer(); setTimerVisible(false); }
+    window.scrollTo(0, 0);
+  }
+
+  /* Timer */
+  function setTimerVisible(on) { $('timer').classList.toggle('off', !on); }
+  function stopTimer() { if (timerId) { clearInterval(timerId); timerId = null; } }
+  function tick() {
+    var left = Math.max(0, (timerEnd - Date.now()) / 1000);
+    $('ringFg').style.strokeDashoffset = String(CIRC * (1 - left / TIME));
+    $('timerNum').textContent = String(Math.ceil(left));
+    $('timer').classList.toggle('low', left <= 5);
+    if (left <= 0) { stopTimer(); if (run && !run.locked) answer(-1); }
+  }
+  function startTimer() {
+    stopTimer();
+    if (!settings.timer) { setTimerVisible(false); return; }
+    setTimerVisible(true);
+    timerEnd = Date.now() + TIME * 1000;
+    tick();
+    timerId = setInterval(tick, 200);
+  }
+
+  /* Quiz flow */
+  function startRun(indices) {
+    var items = indices.map(function (qi) {
+      return { qi: qi, perm: settings.shuffleC ? shuffled([0, 1, 2, 3]) : [0, 1, 2, 3] };
+    });
+    if (settings.shuffleQ) items = shuffled(items);
+    run = { items: items, pos: 0, answers: [], score: 0, locked: false, full: indices.length === TOTAL };
+    show('quiz');
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    var item = run.items[run.pos];
+    var q = QUESTIONS[item.qi];
+    run.locked = false;
+    $('pill').textContent = (run.pos + 1) + ' / ' + run.items.length;
+    $('barFill').style.width = (run.pos / run.items.length * 100) + '%';
+    $('qText').textContent = q.q;
+    var box = $('choices');
+    box.textContent = '';
+    item.perm.forEach(function (orig) {
+      var b = el('button', 'choice');
+      b.type = 'button';
+      b.dataset.orig = String(orig);
+      b.appendChild(el('span', '', q.o[orig]));
+      b.addEventListener('click', function () { answer(orig); });
+      box.appendChild(b);
+    });
+    $('fb').textContent = '';
+    $('fb').className = 'fb';
+    $('next').disabled = true;
+    window.scrollTo(0, 0);
+    startTimer();
+  }
+
+  function answer(picked) {
+    if (!run || run.locked) return;
+    run.locked = true;
+    stopTimer();
+    var item = run.items[run.pos];
+    var q = QUESTIONS[item.qi];
+    var ok = picked === q.a;
+    run.answers.push({ qi: item.qi, picked: picked, ok: ok });
+    if (ok) run.score++;
+
+    Array.prototype.forEach.call($('choices').children, function (b) {
+      var o = Number(b.dataset.orig);
+      b.disabled = true;
+      if (o === q.a) b.classList.add('ok');
+      else if (o === picked) b.classList.add('bad');
+      else b.classList.add('dim');
+    });
+
+    var fb = $('fb');
+    if (ok) { fb.textContent = 'Correct.'; fb.className = 'fb ok'; }
+    else if (picked === -1) { fb.textContent = 'Time is up. The correct answer is in green.'; fb.className = 'fb bad'; }
+    else { fb.textContent = 'Not quite. The correct answer is in green.'; fb.className = 'fb bad'; }
+
+    $('barFill').style.width = ((run.pos + 1) / run.items.length * 100) + '%';
+    var last = run.pos + 1 >= run.items.length;
+    var nx = $('next');
+    nx.textContent = last ? 'See results' : 'Next question';
+    nx.disabled = false;
+    try { nx.focus({ preventScroll: true }); } catch (e) { /* ignore */ }
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    nx.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
+  }
+
+  function nextQuestion() {
+    if (!run || !run.locked) return;
+    if (run.pos + 1 >= run.items.length) { showResult(); return; }
+    run.pos++;
+    renderQuestion();
+  }
+
+  function showResult() {
+    stopTimer();
+    var total = run.items.length;
+    var pct = Math.round(run.score / total * 100);
+    $('pill').textContent = 'Results';
+    $('scoreNum').textContent = String(run.score);
+    $('scoreTotal').textContent = '/ ' + total;
+    $('scorePct').textContent = pct + '% correct';
+    var msg;
+    if (run.score === total) msg = 'Perfect score. Every answer was right.';
+    else if (pct >= 90) msg = 'Excellent. Only a few to review.';
+    else if (pct >= 75) msg = 'Solid. Review the missed ones below.';
+    else if (pct >= 50) msg = 'Getting there. Retry the missed questions to lock them in.';
+    else msg = 'Go back over the lessons, then retry the missed questions.';
+    $('scoreMsg').textContent = msg;
+
+    var missed = run.answers.filter(function (a) { return !a.ok; });
+    $('retryBtn').hidden = missed.length === 0;
+    $('reviewBtn').hidden = missed.length === 0;
+    $('reviewBtn').textContent = 'Show missed questions';
+    var list = $('reviewList');
+    list.hidden = true;
+    list.textContent = '';
+    missed.forEach(function (a) {
+      var q = QUESTIONS[a.qi];
+      var card = el('article');
+      card.appendChild(el('h3', '', 'Question ' + q.n));
+      card.appendChild(el('p', '', q.q));
+      card.appendChild(el('p', 'yours', a.picked === -1 ? 'No answer (time ran out)' : 'Your answer: ' + q.o[a.picked]));
+      card.appendChild(el('p', 'right', 'Correct: ' + q.o[q.a]));
+      list.appendChild(card);
+    });
+
+    if (run.full) {
+      var best = store.get('aq-best', null);
+      var bestPct = best && best.total ? best.score / best.total : -1;
+      if (run.score / total > bestPct) store.set('aq-best', { score: run.score, total: total });
+      renderBest();
+    }
+    show('result');
+  }
+
+  function renderBest() {
+    var best = store.get('aq-best', null);
+    $('bestLine').textContent = best && best.total
+      ? 'Best score: ' + best.score + ' / ' + best.total + ' (' + Math.round(best.score / best.total * 100) + '%)'
+      : '';
+  }
+
+  function goHome() {
+    run = null;
+    $('pill').textContent = TOTAL + ' questions';
+    renderBest();
+    show('start');
+  }
+
+  function allIndices() {
+    var a = [];
+    for (var i = 0; i < TOTAL; i++) a.push(i);
+    return a;
+  }
+
+  /* Menu */
+  function openMenu() {
+    $('scrim').hidden = false;
+    $('drawer').hidden = false;
+    $('menuBtn').setAttribute('aria-expanded', 'true');
+    $('closeMenu').focus();
+  }
+  function closeMenu() {
+    $('scrim').hidden = true;
+    $('drawer').hidden = true;
+    $('menuBtn').setAttribute('aria-expanded', 'false');
+    $('menuBtn').focus();
+  }
+  function bindSetting(id, key, onChange) {
+    var box = $(id);
+    box.checked = settings[key];
+    box.addEventListener('change', function () {
+      settings[key] = box.checked;
+      store.set('aq-settings', settings);
+      if (onChange) onChange();
+    });
+  }
+
+  bindSetting('optShuffleQ', 'shuffleQ');
+  bindSetting('optShuffleC', 'shuffleC');
+  bindSetting('optTimer', 'timer', function () {
+    if (!run || $('quiz').hidden) return;
+    if (!settings.timer) { stopTimer(); setTimerVisible(false); }
+    else if (!run.locked) startTimer();
+  });
+
+  $('menuBtn').addEventListener('click', openMenu);
+  $('closeMenu').addEventListener('click', closeMenu);
+  $('scrim').addEventListener('click', closeMenu);
+  $('restartBtn').addEventListener('click', function () { closeMenu(); startRun(allIndices()); });
+  $('homeBtn').addEventListener('click', function () { closeMenu(); goHome(); });
+
+  $('startBtn').addEventListener('click', function () { startRun(allIndices()); });
+  $('next').addEventListener('click', nextQuestion);
+  $('againBtn').addEventListener('click', function () { startRun(allIndices()); });
+  $('retryBtn').addEventListener('click', function () {
+    var ids = run.answers.filter(function (a) { return !a.ok; }).map(function (a) { return a.qi; });
+    startRun(ids);
+  });
+  $('reviewBtn').addEventListener('click', function () {
+    var list = $('reviewList');
+    list.hidden = !list.hidden;
+    $('reviewBtn').textContent = list.hidden ? 'Show missed questions' : 'Hide missed questions';
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !$('drawer').hidden) { closeMenu(); return; }
+    if (!$('drawer').hidden || $('quiz').hidden || !run) return;
+    if (e.key >= '1' && e.key <= '4' && !run.locked) {
+      var b = $('choices').children[Number(e.key) - 1];
+      if (b) { answer(Number(b.dataset.orig)); }
+    } else if (e.key === 'Enter' && run.locked && !(document.activeElement && document.activeElement.tagName === 'BUTTON')) {
+      nextQuestion();
+    }
+  });
+
+  $('ringFg').style.strokeDasharray = String(CIRC);
+  $('lead').textContent = TOTAL + ' multiple-choice questions. Pick an answer to see right away whether it is correct, then review anything you missed at the end.';
+  goHome();
+})();
+</script>
+
+</body></html>
